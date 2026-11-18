@@ -1,7 +1,125 @@
-<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"><meta name="theme-color" content="#0b1220"><title>CHAOS RUSH — Lobby</title><link rel="stylesheet" href="style.css"><script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script></head><body><main class="app-shell">
-<header class="topbar"><div class="brand"><span class="bolt">⚡</span><div><b>CHAOS RUSH</b><small>ARCADE RACING</small></div></div><div id="connection" class="connection"><i></i><span id="connectionText">CONECTANDO...</span></div></header>
-<section id="homeScreen" class="screen home-screen"><div class="hero"><p class="eyebrow">MULTIPLAYER PARTY RACING</p><h1>READY TO<br><em>RACE?</em></h1><p class="subtitle">Una pantalla. Hasta 16 pilotos. Cada celular es un control.</p></div><div class="home-grid"><article class="card"><div class="card-icon">🏁</div><p class="eyebrow">ANFITRIÓN</p><h2>Crear una sala</h2><p>Abre el lobby en esta pantalla y comparte el QR.</p><button id="createRoomBtn" class="btn primary">CREAR SALA →</button></article><article class="card"><div class="card-icon">📱</div><p class="eyebrow">CORREDOR</p><h2>Unirme a una sala</h2><p>Escribe el código que aparece en la pantalla principal.</p><input id="roomCodeInput" class="code-input" maxlength="6" placeholder="CÓDIGO"><button id="joinRoomBtn" class="btn secondary">UNIRME →</button></article></div><p id="homeMessage" class="message"></p></section>
-<section id="lobbyScreen" class="screen hidden"><div class="lobby-heading"><div><p class="eyebrow" id="lobbyRole">SALA DE CARRERA</p><h1>THE <em>LOBBY</em></h1><p class="subtitle">Esperando a que la parrilla se llene...</p></div><div class="room-code"><small>CÓDIGO DE SALA</small><strong id="roomCodeDisplay">------</strong><button id="copyCodeBtn">COPIAR CÓDIGO</button></div></div>
-<div class="lobby-grid"><section class="card players-card"><div class="section-head"><h2>PILOTOS <span id="playerCount">0/16</span></h2><b class="live">● EN VIVO</b></div><div id="playersList" class="players-list">Conectando con la sala...</div><div id="hostControls" class="hidden"><button id="startRaceBtn" class="btn primary" disabled>INICIAR CARRERA →</button><p id="startHint" class="hint">Se necesitan al menos 2 pilotos listos.</p></div><div id="playerControls" class="hidden"><button id="readyBtn" class="btn primary">ESTOY LISTO ✓</button><p class="hint">Confirma cuando estés preparado.</p></div></section>
-<aside class="side"><section class="card qr-card"><p class="eyebrow">ENTRADA RÁPIDA</p><h2>ESCANEA Y ÚNETE</h2><div id="qrCode" class="qr-frame"></div><p class="hint">Escanea con la cámara de tu celular.</p><button id="copyLinkBtn" class="btn secondary">COPIAR ENLACE</button></section><section class="card"><p class="eyebrow">TU PILOTO</p><label for="playerName">NOMBRE</label><input id="playerName" class="profile-input" maxlength="16" placeholder="Tu apodo"><label>COLOR DEL VEHÍCULO</label><div id="colorChoices" class="colors"><button data-color="#ff5365" style="--car:#ff5365" class="selected"></button><button data-color="#4de5d2" style="--car:#4de5d2"></button><button data-color="#ffd84d" style="--car:#ffd84d"></button><button data-color="#a78bfa" style="--car:#a78bfa"></button><button data-color="#f8fafc" style="--car:#f8fafc"></button><button data-color="#fb923c" style="--car:#fb923c"></button></div><button id="saveProfileBtn" class="btn secondary">GUARDAR PERFIL</button></section></aside></div><p id="lobbyMessage" class="message"></p></section>
-<section id="startingScreen" class="screen hidden"><div class="card starting"><p class="eyebrow">PARRILLA CONFIRMADA</p><h1>LET'S <em>RUSH!</em></h1><p id="startingText">La sala está lista.</p><div class="flag">🏁</div><p class="hint">El lobby ya está conectado. En la siguiente actualización conectaremos los joysticks de cada celular con los coches.</p><button id="backLobbyBtn" class="btn secondary">VOLVER AL LOBBY</button></div></section><footer>CHAOS RUSH • BUILD 0.2 LOBBY • MADE TO PLAY TOGETHER</footer></main><script src="game.js"></script></body></html>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <meta name="theme-color" content="#090b12">
+  <title>CHAOS RUSH — Arcade Racing</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+</head>
+<body>
+  <div class="noise"></div>
+  <main id="app">
+    <section id="setupScreen" class="screen">
+      <div class="brand"><span class="brand-mark">⚡</span><span>CHAOS<span class="brand-red"> RUSH</span></span></div>
+      <p class="eyebrow">MULTIPLAYER ARCADE RACING</p>
+      <h1>QUE GANE<br><em>EL MÁS CAÓTICO.</em></h1>
+      <p class="intro">Crea una sala en tu computadora y conecta los celulares como controles.</p>
+      <div class="setup-grid">
+        <article class="panel">
+          <h2>CREAR CARRERA</h2>
+          <label for="hostName">Tu nombre de piloto</label>
+          <input id="hostName" maxlength="14" placeholder="PILOTO 01" value="HOST">
+          <button id="createBtn" class="btn btn-primary">CREAR SALA <span>→</span></button>
+        </article>
+        <article class="panel">
+          <h2>UNIRSE A UNA SALA</h2>
+          <label for="joinName">Tu nombre de piloto</label>
+          <input id="joinName" maxlength="14" placeholder="¿Cómo te llamas?">
+          <label for="roomInput">Código de carrera</label>
+          <input id="roomInput" class="code-input" maxlength="6" placeholder="ABC123" autocomplete="off">
+          <button id="joinBtn" class="btn btn-secondary">ENTRAR A LA CARRERA <span>→</span></button>
+        </article>
+      </div>
+      <p class="tiny">No necesitas instalar nada. Solo abre el enlace desde tu celular.</p>
+      <p id="setupError" class="error"></p>
+    </section>
+
+    <section id="lobbyScreen" class="screen hidden">
+      <header class="topbar">
+        <div class="brand small"><span class="brand-mark">⚡</span> CHAOS<span class="brand-red"> RUSH</span></div>
+        <div class="room-chip">SALA <strong id="roomCodeLabel">------</strong></div>
+      </header>
+      <div class="lobby-layout">
+        <div class="lobby-copy">
+          <p class="eyebrow">LA GRID ESTÁ CASI LISTA</p>
+          <h1>REÚNE A TU<br><em>MANADA.</em></h1>
+          <p id="lobbyHint">Comparte el código. Cada jugador entra desde su celular y toca LISTO.</p>
+          <div class="share-row">
+            <div class="share-code" id="shareCode">------</div>
+            <button id="copyBtn" class="btn btn-secondary compact">COPIAR LINK</button>
+          </div>
+          <div id="hostActions">
+            <button id="startBtn" class="btn btn-primary">ARRANCAR CARRERA <span>→</span></button>
+            <p class="tiny">Mínimo 2 pilotos listos. Máximo 16.</p>
+          </div>
+          <div id="controllerActions" class="hidden">
+            <button id="readyBtn" class="btn btn-primary">¡ESTOY LISTO!</button>
+            <p class="tiny">Cuando el anfitrión arranque, usa tu celular como control.</p>
+          </div>
+        </div>
+        <div class="panel roster-panel">
+          <div class="roster-heading"><h2>PILOTOS</h2><span id="playerCount">0 / 16</span></div>
+          <div id="playerList" class="player-list"></div>
+          <div class="roster-footer"><span class="pulse"></span> CONEXIÓN EN VIVO</div>
+        </div>
+      </div>
+    </section>
+
+    <section id="raceScreen" class="screen race-screen hidden">
+      <header class="race-header">
+        <div class="brand small"><span class="brand-mark">⚡</span> CHAOS<span class="brand-red"> RUSH</span></div>
+        <div class="race-meta"><span id="raceRoom">SALA ------</span><b id="raceStatus">PREPÁRATE</b></div>
+      </header>
+      <div class="race-stage">
+        <canvas id="raceCanvas" width="1200" height="760"></canvas>
+        <div class="countdown hidden" id="countdown">3</div>
+        <div class="race-overlay">
+          <div class="lap-box"><small>VUELTA</small><strong id="hostLap">1 / 3</strong></div>
+          <div class="standings" id="standings"></div>
+        </div>
+      </div>
+      <div class="race-bottom">
+        <span id="raceMessage">ACELERA. DERRAPA. SOBREVIVE.</span>
+        <span id="hostControlsHint">WASD / FLECHAS · SHIFT NITRO</span>
+      </div>
+    </section>
+
+    <section id="controllerScreen" class="screen controller-screen hidden">
+      <div class="controller-top">
+        <div class="brand small"><span class="brand-mark">⚡</span> CHAOS<span class="brand-red"> RUSH</span></div>
+        <div class="room-chip">SALA <strong id="controllerRoom">------</strong></div>
+      </div>
+      <div class="controller-info">
+        <p class="eyebrow">CONTROL DE PILOTO</p>
+        <h1 id="controllerPlayer">LISTO PARA EL CAOS</h1>
+        <div class="controller-stats"><span>VUELTA <b id="mobileLap">1 / 3</b></span><span>POSICIÓN <b id="mobilePosition">—</b></span><span>VELOCIDAD <b id="mobileSpeed">0</b></span></div>
+      </div>
+      <div class="touch-controls">
+        <div class="steering-area">
+          <div class="joystick" id="joystick"><div class="joystick-knob" id="joystickKnob"></div></div>
+          <span class="control-caption">DIRECCIÓN</span>
+        </div>
+        <div class="pedals">
+          <button id="nitroBtn" class="pedal nitro"><span>⚡</span><small>NITRO</small></button>
+          <button id="brakeBtn" class="pedal brake"><span>▼</span><small>FRENO</small></button>
+          <button id="gasBtn" class="pedal gas"><span>▲</span><small>ACELERAR</small></button>
+        </div>
+      </div>
+      <div id="mobileRaceMessage" class="mobile-message">ESPERANDO LA SALIDA…</div>
+    </section>
+
+    <section id="finishScreen" class="screen finish-screen hidden">
+      <div class="brand"><span class="brand-mark">⚡</span> CHAOS<span class="brand-red"> RUSH</span></div>
+      <p class="eyebrow">BANDERA A CUADROS</p>
+      <h1>SE ACABÓ<br><em>EL CAOS.</em></h1>
+      <div id="finalResults" class="final-results"></div>
+      <button id="backLobbyBtn" class="btn btn-primary">VOLVER AL LOBBY</button>
+    </section>
+  </main>
+  <script src="game.js"></script>
+</body>
+</html>

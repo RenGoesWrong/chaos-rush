@@ -4,9 +4,21 @@
       "$room": {
         ".read": "auth != null",
         ".write": "auth != null && !data.exists() && newData.child('hostUid').val() === auth.uid",
-        "status": { ".write": "auth != null && root.child('rooms').child($room).child('hostUid').val() === auth.uid" },
+        "status": {
+          ".write": "auth != null && root.child('rooms').child($room).child('hostUid').val() === auth.uid"
+        },
         "players": {
-          "$uid": { ".write": "auth != null && (auth.uid === $uid || root.child('rooms').child($room).child('hostUid').val() === auth.uid)" }
+          "$uid": {
+            ".write": "auth != null && (auth.uid === $uid || root.child('rooms').child($room).child('hostUid').val() === auth.uid)"
+          }
+        },
+        "controls": {
+          "$uid": {
+            ".write": "auth != null && auth.uid === $uid"
+          }
+        },
+        "raceState": {
+          ".write": "auth != null && root.child('rooms').child($room).child('hostUid').val() === auth.uid"
         }
       }
     }
