@@ -1,63 +1,22 @@
 (() => {
-const canvas=document.getElementById('game'),ctx=canvas.getContext('2d');
-const $=id=>document.getElementById(id);
-const lapEl=$('lap'),timeEl=$('time'),speedEl=$('speed'),overlay=$('overlay'),finish=$('finish'),pauseLayer=$('pauseLayer');
-let W=0,H=0,dpr=1,raf=0,last=0,running=false,paused=false,finished=false;
-let elapsed=0,lap=1,lapProgress=0,nitro=3,nitroTime=0,steer=0,keys={};
-const track={cx:0,cy:0,rx:0,ry:0,innerX:0,innerY:0};
-const car={angle:-Math.PI/2,x:0,y:0,speed:0,max:245,turn:2.65,trail:[]};
-const pickups=[];
-function resize(){const r=canvas.getBoundingClientRect();dpr=Math.min(devicePixelRatio||1,2);W=Math.max(1,r.width);H=Math.max(1,r.height);canvas.width=Math.round(W*dpr);canvas.height=Math.round(H*dpr);ctx.setTransform(dpr,0,0,dpr,0,0);layoutTrack();draw()}
-function layoutTrack(){track.cx=W/2;track.cy=H/2;const scale=Math.min(W/900,H/560);track.rx=Math.max(120,Math.min(W*.39,390*scale));track.ry=Math.max(90,Math.min(H*.36,220*scale));track.innerX=track.rx*.57;track.innerY=track.ry*.53;if(!running){car.x=track.cx;car.y=track.cy-track.ry;}}
-function format(t){let m=Math.floor(t/60),s=(t%60).toFixed(1);return String(m).padStart(2,'0')+':'+s.padStart(4,'0')}
-function reset(){elapsed=0;lap=1;lapProgress=0;nitro=3;nitroTime=0;car.angle=-Math.PI/2;car.x=track.cx;car.y=track.cy-track.ry+22;car.speed=0;car.trail=[];finished=false;paused=false;running=true;overlay.classList.add('hidden');finish.classList.add('hidden');pauseLayer.classList.add('hidden');updateHud()}
-function updateHud(){lapEl.textContent=Math.min(lap,3)+' / 3';timeEl.textContent=format(elapsed);speedEl.textContent=Math.round(car.speed*0.7);$('nitroCount').textContent=nitro+' CARGAS'}
-function onTrack(x,y){let dx=(x-track.cx),dy=(y-track.cy);let outer=(dx*dx)/(track.rx*track.rx)+(dy*dy)/(track.ry*track.ry);let inner=(dx*dx)/(track.innerX*track.innerX)+(dy*dy)/(track.innerY*track.innerY);return outer<=1&&inner>=1}
-function drawTrack(){ctx.fillStyle='#183a32';ctx.fillRect(0,0,W,H);
- // decorative grass dots
- ctx.fillStyle='#ffffff0a';for(let i=0;i<100;i++){let x=(i*137)%W,y=(i*83)%H;ctx.fillRect(x,y,2,2)}
- ctx.beginPath();ctx.ellipse(track.cx,track.cy,track.rx,track.ry,0,0,Math.PI*2);ctx.ellipse(track.cx,track.cy,track.innerX,track.innerY,0,0,Math.PI*2,true);ctx.fillStyle='#39434b';ctx.fill('evenodd');
- ctx.lineWidth=5;ctx.strokeStyle='#e9e8d2';ctx.setLineDash([16,12]);ctx.beginPath();ctx.ellipse(track.cx,track.cy,(track.rx+track.innerX)/2,(track.ry+track.innerY)/2,0,0,Math.PI*2);ctx.stroke();ctx.setLineDash([]);
- ctx.lineWidth=4;ctx.strokeStyle='#a9b5b7';ctx.beginPath();ctx.ellipse(track.cx,track.cy,track.rx,track.ry,0,0,Math.PI*2);ctx.stroke();ctx.beginPath();ctx.ellipse(track.cx,track.cy,track.innerX,track.innerY,0,0,Math.PI*2);ctx.stroke();
- // start line at top
- const sx=track.cx,sy=track.cy-track.ry;ctx.save();ctx.translate(sx,sy);ctx.rotate(Math.PI/2);for(let i=0;i<8;i++){ctx.fillStyle=i%2?'#17202a':'#f5f5e8';ctx.fillRect(-18+i*5,-9,5,18)}ctx.restore();
- // cones
- for(let i=0;i<8;i++){let a=-1.2+i*.34,x=track.cx+Math.cos(a)*(track.innerX+18),y=track.cy+Math.sin(a)*(track.innerY+18);ctx.fillStyle='#ffb23f';ctx.beginPath();ctx.moveTo(x,y-6);ctx.lineTo(x-5,y+5);ctx.lineTo(x+5,y+5);ctx.closePath();ctx.fill()}
-}
-function drawCar(){ctx.save();ctx.translate(car.x,car.y);ctx.rotate(car.angle+Math.PI/2);
- // shadow
- ctx.fillStyle='#0007';ctx.beginPath();ctx.ellipse(3,5,12,20,0,0,Math.PI*2);ctx.fill();
- // body
- ctx.fillStyle=nitroTime>0?'#62eaff':'#ff5365';ctx.beginPath();ctx.roundRect(-10,-18,20,36,7);ctx.fill();
- ctx.fillStyle='#18283b';ctx.beginPath();ctx.roundRect(-7,-7,14,12,4);ctx.fill();
- ctx.fillStyle='#ffe36c';ctx.fillRect(-8,-16,5,3);ctx.fillRect(3,-16,5,3);
- ctx.fillStyle='#161d29';ctx.fillRect(-12,-10,3,8);ctx.fillRect(9,-10,3,8);ctx.fillRect(-12,8,3,7);ctx.fillRect(9,8,3,7);
- if(nitroTime>0){ctx.fillStyle='#62eaff';ctx.beginPath();ctx.moveTo(-5,17);ctx.lineTo(0,29+Math.random()*8);ctx.lineTo(5,17);ctx.fill()}
- ctx.restore()}
-function draw(){if(!W||!H)return;ctx.clearRect(0,0,W,H);drawTrack();drawCar();if(running&&!finished){ctx.fillStyle='#fff';ctx.font='700 11px Inter';ctx.fillText('CHAOS RUSH • PROTOTIPO',16,22)}}
-function update(dt){if(!running||paused||finished)return;elapsed+=dt;const boost=nitroTime>0?1.75:1;nitroTime=Math.max(0,nitroTime-dt);
- const target=car.max*boost;car.speed+=(target-car.speed)*Math.min(1,dt*1.7);
- const direction=(keys.ArrowRight||keys.d?1:0)-(keys.ArrowLeft||keys.a?1:0);const steerInput=Math.abs(steer)>.05?steer:direction;
- car.angle+=steerInput*car.turn*dt*(.45+car.speed/car.max*.65);
- car.x+=Math.cos(car.angle)*car.speed*dt;car.y+=Math.sin(car.angle)*car.speed*dt;
- if(!onTrack(car.x,car.y)){car.speed*=.965;car.x+=(track.cx-car.x)*dt*.14;car.y+=(track.cy-car.y)*dt*.14}
- // Count progress by angular position around oval, increasing clockwise from top.
- let a=Math.atan2((car.y-track.cy)/track.ry,(car.x-track.cx)/track.rx);let p=(a+Math.PI/2+Math.PI*2)%(Math.PI*2);let delta=(p-lapProgress+Math.PI*3)%(Math.PI*2)-Math.PI;
- if(delta>0&&delta<.16)lapProgress=p;
- if(p<.45&&lapProgress>5.6&&car.y<track.cy-track.ry*.62&&car.x>track.cx-track.rx*.25&&car.x<track.cx+track.rx*.25){lap++;lapProgress=0;if(lap>3){finished=true;running=false;$('finishTime').textContent='Tu tiempo: '+format(elapsed);finish.classList.remove('hidden')}}
- updateHud();draw()}
-function loop(ts){if(!last)last=ts;let dt=Math.min((ts-last)/1000,.04);last=ts;update(dt);raf=requestAnimationFrame(loop)}
-$('startBtn').addEventListener('click',()=>{reset();last=0});
-$('againBtn').addEventListener('click',reset);
-$('pauseBtn').addEventListener('click',()=>{if(!running)return;paused=!paused;pauseLayer.classList.toggle('hidden',!paused)});
-$('nitroBtn').addEventListener('pointerdown',e=>{e.preventDefault();if(running&&!paused&&nitro>0){nitro--;nitroTime=1.35;updateHud()}});
-window.addEventListener('keydown',e=>{keys[e.key]=true;if(['ArrowLeft','ArrowRight',' '].includes(e.key))e.preventDefault()});
-window.addEventListener('keyup',e=>keys[e.key]=false);
-const zone=$('stickZone'),knob=$('stickKnob');let pointer=null;
-function stick(e){const r=zone.getBoundingClientRect(),cx=r.left+r.width/2,cy=r.top+r.height/2;let dx=e.clientX-cx,dy=e.clientY-cy;let max=27,len=Math.hypot(dx,dy);if(len>max){dx=dx/len*max;dy=dy/len*max}knob.style.transform=`translate(${dx}px,${dy}px)`;steer=Math.max(-1,Math.min(1,dx/max))}
-zone.addEventListener('pointerdown',e=>{pointer=e.pointerId;zone.setPointerCapture(pointer);stick(e)});
-zone.addEventListener('pointermove',e=>{if(pointer===e.pointerId)stick(e)});
-function release(){pointer=null;steer=0;knob.style.transform='translate(0,0)'}
-zone.addEventListener('pointerup',release);zone.addEventListener('pointercancel',release);window.addEventListener('resize',resize);
-resize();requestAnimationFrame(loop);
+const $=id=>document.getElementById(id), screens=["homeScreen","lobbyScreen","startingScreen"];
+const cfg={apiKey:"AIzaSyAIT610FGPePtKPD3Z3Aiemks-ttB0d7C4",authDomain:"chaos-rush-542cb.firebaseapp.com",databaseURL:"https://chaos-rush-542cb-default-rtdb.firebaseio.com",projectId:"chaos-rush-542cb",storageBucket:"chaos-rush-542cb.firebasestorage.app",messagingSenderId:"946275795083",appId:"1:946275795083:web:92ffbc91c9493485e0548e",measurementId:"G-J0KWV5PDZW"};
+const s={user:null,code:null,host:false,room:null,playersRef:null,players:{},color:"#ff5365",playerRef:null,link:""};
+function show(id){screens.forEach(x=>$(x).classList.toggle("hidden",x!==id))}
+function msg(t,where="homeMessage"){$(where).textContent=t||""}
+function err(e){const c=e?.code||"";if(c.includes("operation-not-allowed"))return"Activa el proveedor Anónimo en Firebase Authentication.";if(c.includes("PERMISSION_DENIED")||c.includes("permission_denied"))return"Acceso denegado. Publica las reglas de Realtime Database del archivo firebase-rules.json.";if(c.includes("network"))return"Sin conexión. Revisa internet.";return e?.message||"Ocurrió un error."}
+function code(){const a="ABCDEFGHJKLMNPQRSTUVWXYZ23456789";return Array.from({length:6},()=>a[Math.floor(Math.random()*a.length)]).join("")}
+function name(){return($("playerName").value||"Piloto").trim().replace(/[<>]/g,"").slice(0,16)||"Piloto"}
+async function auth(){if(!firebase.apps.length)firebase.initializeApp(cfg);if(!firebase.auth().currentUser)await firebase.auth().signInAnonymously();s.user=firebase.auth().currentUser}
+function busy(id,on,label){const b=$(id);b.disabled=on;if(on)b.dataset.old=b.textContent;b.textContent=on?label:(b.dataset.old||label)}
+async function create(){busy("createRoomBtn",true,"CREANDO...");try{await auth();let c,r,snap;for(let i=0;i<8;i++){c=code();r=firebase.database().ref("rooms/"+c);snap=await r.once("value");if(!snap.exists())break}if(snap.exists())throw Error("No se pudo generar un código. Intenta otra vez.");s.code=c;s.host=true;s.room=r;s.playersRef=r.child("players");await r.set({hostUid:s.user.uid,createdAt:firebase.database.ServerValue.TIMESTAMP,status:"lobby",maxPlayers:16,players:{[s.user.uid]:{name:name(),color:s.color,ready:true,joinedAt:Date.now()}}});s.playerRef=s.playersRef.child(s.user.uid);s.playerRef.onDisconnect().remove();enter()}catch(e){msg(err(e))}finally{busy("createRoomBtn",false,"CREAR SALA →")}}
+async function join(c){c=String(c||"").toUpperCase().replace(/[^A-Z0-9]/g,"").slice(0,6);if(c.length!==6){msg("El código debe tener 6 caracteres.");return}busy("joinRoomBtn",true,"ENTRANDO...");try{await auth();const r=firebase.database().ref("rooms/"+c),snap=await r.once("value");if(!snap.exists())throw Error("No encontramos esa sala. Revisa el código.");const room=snap.val(),players=room.players||{};if(room.status!=="lobby")throw Error("La carrera ya comenzó.");if(!players[s.user.uid]&&Object.keys(players).length>=16)throw Error("La sala está llena (16/16).");s.code=c;s.host=room.hostUid===s.user.uid;s.room=r;s.playersRef=r.child("players");await s.playersRef.child(s.user.uid).set(players[s.user.uid]||{name:name(),color:s.color,ready:false,joinedAt:Date.now()});s.playerRef=s.playersRef.child(s.user.uid);s.playerRef.onDisconnect().remove();enter()}catch(e){msg(err(e))}finally{busy("joinRoomBtn",false,"UNIRME →")}}
+function enter(){show("lobbyScreen");$("roomCodeDisplay").textContent=s.code;$("lobbyRole").textContent=s.host?"SALA DEL ANFITRIÓN":"TE UNISTE A LA SALA";$("hostControls").classList.toggle("hidden",!s.host);$("playerControls").classList.toggle("hidden",s.host);const u=new URL(location.href);u.search="?room="+s.code;s.link=u.toString();$("qrCode").innerHTML="";if(window.QRCode)new QRCode($("qrCode"),{text:s.link,width:144,height:144});else $("qrCode").textContent="QR no disponible";$("copyCodeBtn").onclick=()=>copy(s.code);$("copyLinkBtn").onclick=()=>copy(s.link);s.playersRef.off();s.playersRef.on("value",snap=>{s.players=snap.val()||{};render()});s.room.child("status").on("value",snap=>{if(["starting","racing"].includes(snap.val())){$("startingText").textContent="Sala "+s.code+" confirmada. "+Object.keys(s.players).length+" pilotos conectados.";show("startingScreen")}})}
+function render(){const entries=Object.entries(s.players);$("playerCount").textContent=entries.length+"/16";const list=$("playersList");list.innerHTML="";if(!entries.length){list.innerHTML='<div class="empty-state">Todavía no hay pilotos conectados.</div>'}entries.sort((a,b)=>(a[1].joinedAt||0)-(b[1].joinedAt||0)).forEach(([uid,p],i)=>{const row=document.createElement("div");row.className="player-row";const car=document.createElement("span");car.className="car-dot";car.style.setProperty("--car",p.color||"#ff5365");const info=document.createElement("div");info.className="player-info";const n=document.createElement("strong");n.textContent=p.name||"Piloto";const sub=document.createElement("small");sub.textContent=uid===s.user.uid?"TÚ":"PILOTO "+(i+1);info.append(n,sub);const st=document.createElement("span");st.className="player-state"+(p.ready?" ready":"");st.textContent=p.ready?"LISTO":"ESPERANDO";row.append(car,info,st);list.append(row)});const ready=entries.length>=2&&entries.every(x=>x[1].ready===true);$("startRaceBtn").disabled=!s.host||!ready;$("startHint").textContent=entries.length<2?"Se necesitan al menos 2 pilotos conectados.":ready?"¡Todos listos! Ya puedes iniciar.":"Faltan "+entries.filter(x=>!x[1].ready).length+" pilotos por confirmar."}
+async function toggleReady(){const p=s.players[s.user.uid]||{};const ready=!p.ready;await s.playerRef.update({ready});$("readyBtn").textContent=ready?"YA ESTOY LISTO ✓":"ESTOY LISTO ✓"}
+async function save(){await s.playerRef.update({name:name(),color:s.color});msg("Perfil guardado.","lobbyMessage")}
+async function start(){if(!s.host)return;const a=Object.values(s.players);if(a.length<2||!a.every(p=>p.ready))return msg("Todos deben estar listos.","lobbyMessage");try{await s.room.child("status").set("starting")}catch(e){msg(err(e),"lobbyMessage")}}
+async function copy(t){try{await navigator.clipboard.writeText(t);msg("Copiado.","lobbyMessage")}catch{msg("No se pudo copiar automáticamente.","lobbyMessage")}}
+function setup(){ $("createRoomBtn").onclick=create;$("joinRoomBtn").onclick=()=>join($("roomCodeInput").value);$("roomCodeInput").oninput=e=>e.target.value=e.target.value.toUpperCase().replace(/[^A-Z0-9]/g,"").slice(0,6);$("roomCodeInput").onkeydown=e=>{if(e.key==="Enter")join(e.target.value)};$("readyBtn").onclick=()=>toggleReady().catch(e=>msg(err(e),"lobbyMessage"));$("saveProfileBtn").onclick=()=>save().catch(e=>msg(err(e),"lobbyMessage"));$("startRaceBtn").onclick=start;$("backLobbyBtn").onclick=()=>show("lobbyScreen");$("colorChoices").onclick=e=>{const b=e.target.closest("button[data-color]");if(!b)return;document.querySelectorAll("#colorChoices button").forEach(x=>x.classList.remove("selected"));b.classList.add("selected");s.color=b.dataset.color};try{if(!firebase.apps.length)firebase.initializeApp(cfg);firebase.database().ref(".info/connected").on("value",snap=>{$("connection").classList.toggle("online",!!snap.val());$("connectionText").textContent=snap.val()?"CONECTADO":"SIN CONEXIÓN"})}catch(e){msg(err(e))}const c=new URLSearchParams(location.search).get("room");if(c){$("roomCodeInput").value=c;join(c)}}
+document.addEventListener("DOMContentLoaded",setup);
 })();
