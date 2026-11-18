@@ -1,6 +1,6 @@
 (() => {
 const $=id=>document.getElementById(id), screens=["homeScreen","lobbyScreen","startingScreen"];
-const cfg={apiKey:"AIzaSyAIT610FGPePtKPD3Z3Aiemks-ttB0d7C4",authDomain:"chaos-rush-542cb.firebaseapp.com",databaseURL:"https://chaos-rush-542cb-default-rtdb.firebaseio.com",projectId:"chaos-rush-542cb",storageBucket:"chaos-rush-542cb.firebasestorage.app",messagingSenderId:"946275795083",appId:"1:946275795083:web:92ffbc91c9493485e0548e",measurementId:"G-J0KWV5PDZW"};
+const cfg={apiKey:"AIzaSyAIT61OFGPePtKPD3Z3Aeimks-ttBOd7C4",authDomain:"chaos-rush-542cb.firebaseapp.com",databaseURL:"https://chaos-rush-542cb-default-rtdb.firebaseio.com",projectId:"chaos-rush-542cb",storageBucket:"chaos-rush-542cb.firebasestorage.app",messagingSenderId:"946275795083",appId:"1:946275795083:web:92ffbc91c9493485e0548e",measurementId:"G-J0KWV5PDZW"};
 const s={user:null,code:null,host:false,room:null,playersRef:null,players:{},color:"#ff5365",playerRef:null,link:""};
 function show(id){screens.forEach(x=>$(x).classList.toggle("hidden",x!==id))}
 function msg(t,where="homeMessage"){$(where).textContent=t||""}
