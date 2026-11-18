@@ -75,7 +75,7 @@
         <div class="race-meta"><span id="raceRoom">SALA ------</span><b id="raceStatus">PREPÁRATE</b></div>
       </header>
       <div class="race-stage">
-        <canvas id="raceCanvas" width="1200" height="760"></canvas>
+        <canvas id="raceCanvas" width="1280" height="720"></canvas>
         <div class="countdown hidden" id="countdown">3</div>
         <div class="race-overlay">
           <div class="lap-box"><small>VUELTA</small><strong id="hostLap">1 / 3</strong></div>
@@ -84,7 +84,7 @@
       </div>
       <div class="race-bottom">
         <span id="raceMessage">ACELERA. DERRAPA. SOBREVIVE.</span>
-        <span id="hostControlsHint">WASD / FLECHAS · SHIFT NITRO</span>
+        <span id="hostControlsHint">WASD / FLECHAS · ESPACIO DERRAPE · E OBJETO · SHIFT NITRO</span>
       </div>
     </section>
 
@@ -105,6 +105,8 @@
         </div>
         <div class="pedals">
           <button id="nitroBtn" class="pedal nitro"><span>⚡</span><small>NITRO</small></button>
+          <button id="driftBtn" class="pedal drift"><span>↗</span><small>DERRAPE</small></button>
+          <button id="itemBtn" class="pedal item"><span>🎁</span><small>OBJETO</small></button>
           <button id="brakeBtn" class="pedal brake"><span>▼</span><small>FRENO</small></button>
           <button id="gasBtn" class="pedal gas"><span>▲</span><small>ACELERAR</small></button>
         </div>
